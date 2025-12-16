@@ -386,7 +386,7 @@ function categorizeLayer(layerId) {
     ];
 
     const plantationLayers = [
-        'plantation_forestiere', 'plantation_anacarde', 'plantation_palmier_hulle',
+        'plantation_forestiere', 'plantation_anacarde', 'plantation_palmier_huile',
         'plantation_cacao', 'plantation_hevea', 'plantation_cafe', 'plantation_fruitiere',
         'plantation_coco', 'amenaegement_agricole', 'v_ml_dk_plantations'
     ];
@@ -440,6 +440,10 @@ function createCategorySection(categoryId, categoryName, layers) {
             <span class="category-toggle">▼</span>
             <span class="category-name">${categoryName}</span>
             <span class="category-count">(${layers.length})</span>
+            <label class="category-select-all" onclick="event.stopPropagation()">
+                <input type="checkbox" id="select-all-${categoryId}" class="category-select-all-checkbox" checked>
+                <span class="category-select-label">Tout</span>
+            </label>
         </div>
         <div class="category-content" id="category-${categoryId}">
         </div>
@@ -447,23 +451,60 @@ function createCategorySection(categoryId, categoryName, layers) {
 
     const content = section.querySelector('.category-content');
     layers.forEach(layer => {
-        const layerItem = createLayerControl(layer);
+        const layerItem = createLayerControl(layer, categoryId);
         content.appendChild(layerItem);
     });
 
-    // Toggle de la catégorie
+    // Toggle de la catégorie (plier/déplier)
     const header = section.querySelector('.category-header');
-    header.addEventListener('click', function () {
+    header.addEventListener('click', function (e) {
+        // Ne pas plier/déplier si on clique sur la checkbox
+        if (e.target.closest('.category-select-all')) {
+            return;
+        }
         content.classList.toggle('collapsed');
         const toggle = this.querySelector('.category-toggle');
         toggle.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
     });
 
+    // Checkbox "Tout sélectionner" de la catégorie
+    const categorySelectAll = section.querySelector(`#select-all-${categoryId}`);
+    categorySelectAll.addEventListener('change', function (e) {
+        e.stopPropagation();
+        const isChecked = this.checked;
+        const categoryCheckboxes = content.querySelectorAll('.layer-control');
+
+        categoryCheckboxes.forEach(checkbox => {
+            if (checkbox.checked !== isChecked) {
+                checkbox.checked = isChecked;
+                const layerId = checkbox.dataset.layerId;
+                toggleVectorLayer(layerId, isChecked);
+            }
+        });
+
+        vectorGrid.redraw();
+
+        // Mettre à jour l'état du "Tout sélectionner" global
+        if (window.updateSelectAllState) {
+            window.updateSelectAllState();
+        }
+    });
+
+    // Fonction pour mettre à jour l'état de la checkbox de catégorie
+    section.updateCategorySelectAll = function () {
+        const categoryCheckboxes = content.querySelectorAll('.layer-control');
+        const allChecked = Array.from(categoryCheckboxes).every(cb => cb.checked);
+        const someChecked = Array.from(categoryCheckboxes).some(cb => cb.checked);
+
+        categorySelectAll.checked = allChecked;
+        categorySelectAll.indeterminate = !allChecked && someChecked;
+    };
+
     return section;
 }
 
 // Créer un contrôle de couche
-function createLayerControl(layer) {
+function createLayerControl(layer, categoryId) {
     const layerItem = document.createElement('div');
     layerItem.className = 'layer-item';
     layerItem.innerHTML = `
@@ -481,6 +522,14 @@ function createLayerControl(layer) {
     const checkbox = layerItem.querySelector('input');
     checkbox.addEventListener('change', function () {
         toggleVectorLayer(layer.id, this.checked, true);
+
+        // Mettre à jour la checkbox de la catégorie
+        const categorySection = document.querySelector(`[data-category="${categorizeLayer(layer.id)}"]`)?.closest('.category-section');
+        if (categorySection && categorySection.updateCategorySelectAll) {
+            categorySection.updateCategorySelectAll();
+        }
+
+        // Mettre à jour la checkbox globale
         if (window.updateSelectAllState) {
             window.updateSelectAllState();
         }

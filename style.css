@@ -170,6 +170,34 @@ header h1 {
     opacity: 0;
 }
 
+.category-select-all {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    transition: background 0.3s ease;
+}
+
+.category-select-all:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.category-select-all-checkbox {
+    cursor: pointer;
+    transform: scale(1.1);
+    margin: 0;
+}
+
+.category-select-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    user-select: none;
+}
+
 .control-panel h3 {
     margin-bottom: 1rem;
     color: #2c3e50;
