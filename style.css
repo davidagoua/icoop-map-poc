@@ -113,6 +113,63 @@ header h1 {
     margin-bottom: 2rem;
 }
 
+/* Styles pour les catégories */
+.category-section {
+    margin-bottom: 1rem;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.category-header:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.category-toggle {
+    margin-right: 10px;
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.category-name {
+    flex: 1;
+    font-size: 0.95rem;
+}
+
+.category-count {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.category-content {
+    padding-left: 10px;
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+}
+
+.category-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
 .control-panel h3 {
     margin-bottom: 1rem;
     color: #2c3e50;

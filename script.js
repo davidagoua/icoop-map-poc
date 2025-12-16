@@ -195,7 +195,7 @@ async function initializeApp() {
 async function loadTilesConfig() {
     const response = await fetch('https://api.maptiler.com/tiles/0199883e-7a16-79bf-99a3-08783aeac961/tiles.json?key=KtvCTMS0ZHPNWOUZcUus');
     const tilesConfig = await response.json();
-    
+
     appConfig.vectorLayers = tilesConfig.vector_layers || [];
     appConfig.tilesUrl = tilesConfig.tiles ? tilesConfig.tiles[0] : '';
     appConfig.minZoom = tilesConfig.minzoom || 1;
@@ -205,7 +205,7 @@ async function loadTilesConfig() {
     const tilesConfig2 = await response2.json();
     console.log(tilesConfig2);
     appConfig.vectorLayers.push(tilesConfig2.vector_layers[0]);
-    
+
     console.log('Configuration chargée:', appConfig);
 }
 
@@ -215,22 +215,22 @@ function initializeMap() {
         minZoom: appConfig.minZoom,
         maxZoom: appConfig.maxZoom
     }).setView([7.5399, -5.5471], 8);
-    
+
 
     const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
-    
+
 
     satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: '© Esri, DigitalGlobe, Earthstar Geographics'
     });
-    
+
 
     const baseLayers = {
         "Carte Standard": osmLayer,
     };
-    
+
     L.control.layers(baseLayers).addTo(map);
     L.control.scale({ imperial: false }).addTo(map);
 }
@@ -242,7 +242,7 @@ function initializeVectorTiles() {
     }
 
     const vectorTileLayerStyles = {};
-    
+
     appConfig.vectorLayers.forEach(layer => {
         vectorTileLayerStyles[layer.id] = layerStyles[layer.id] || getDefaultStyle();
     });
@@ -250,76 +250,80 @@ function initializeVectorTiles() {
     vectorGrid = L.vectorGrid.protobuf(appConfig.tilesUrl, {
         vectorTileLayerStyles: vectorTileLayerStyles,
         interactive: true,
-        getFeatureId: function(feature) {
+        getFeatureId: function (feature) {
             return feature.properties?.OBJECTID || feature.id;
         },
         maxNativeZoom: appConfig.maxZoom,
         minNativeZoom: appConfig.minZoom
     }).addTo(map);
-    
 
-    vectorGrid.on('click', function(e) {
+
+    vectorGrid.on('click', function (e) {
         const layer = e.layer;
         const properties = e.layer.properties;
         const layerId = e.layer._vectorTileLayer?.name || 'unknown';
-        
+
         showFeatureInfo(properties, layerId);
-        
+
 
         highlightFeature(layer);
     });
-    
-    vectorGrid.on('mouseover', function(e) {
+
+    vectorGrid.on('mouseover', function (e) {
         map.getContainer().style.cursor = 'pointer';
     });
-    
-    vectorGrid.on('mouseout', function(e) {
+
+    vectorGrid.on('mouseout', function (e) {
         map.getContainer().style.cursor = '';
     });
 }
 
-function setupSelectAllCheckbox(){
+function setupSelectAllCheckbox() {
     const selectAllCheckbox = document.getElementById('select-all-layers');
-    const layerControls = document.querySelectorAll('.layer-control:not(#select-all-layers)');
-    
-    selectAllCheckbox.addEventListener('change', function() {
+
+    // Fonction pour obtenir toutes les checkboxes de couches
+    function getLayerCheckboxes() {
+        return document.querySelectorAll('.layer-control:not(#select-all-layers)');
+    }
+
+    selectAllCheckbox.addEventListener('change', function () {
         const isChecked = this.checked;
-        var i= 0;
+        const layerControls = getLayerCheckboxes();
+        var i = 0;
+
         layerControls.forEach(checkbox => {
             i++;
             if (checkbox.checked !== isChecked) {
                 checkbox.checked = isChecked;
-               
+
                 const layerId = checkbox.dataset.layerId;
-                console.log(layerId)
-                if(i === layerControls.length){
+                console.log(layerId);
+                if (i === layerControls.length) {
                     toggleVectorLayer(layerId, isChecked);
-                }else{
+                } else {
                     toggleVectorLayer(layerId, isChecked);
                 }
-                
             }
-            
         });
         vectorGrid.redraw();
     });
 
-    layerControls.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const allChecked = Array.from(layerControls).every(cb => cb.checked);
-            selectAllCheckbox.checked = allChecked;
-            selectAllCheckbox.indeterminate = !allChecked && 
-                Array.from(layerControls).some(cb => cb.checked);
-        });
-    });
-    vectorGrid.redraw();
+    // Mettre à jour le select-all quand une checkbox individuelle change
+    // Cette fonction sera appelée par les checkboxes individuelles
+    window.updateSelectAllState = function () {
+        const layerControls = getLayerCheckboxes();
+        const allChecked = Array.from(layerControls).every(cb => cb.checked);
+        selectAllCheckbox.checked = allChecked;
+        selectAllCheckbox.indeterminate = !allChecked &&
+            Array.from(layerControls).some(cb => cb.checked);
+    };
 }
 
 // Afficher les informations de l'élément cliqué
 function showFeatureInfo(properties, layerId) {
     const infoPanel = document.getElementById('feature-info');
     const layerName = formatLayerName(layerId);
-    
+
     let html = `
         <div class="feature-header">
             <h4>${layerName}</h4>
@@ -327,7 +331,7 @@ function showFeatureInfo(properties, layerId) {
         </div>
         <div class="feature-properties">
     `;
-    
+
     if (properties && Object.keys(properties).length > 0) {
         Object.keys(properties).forEach(key => {
             const value = properties[key];
@@ -343,7 +347,7 @@ function showFeatureInfo(properties, layerId) {
     } else {
         html += `<div class="no-properties">Aucune propriété disponible</div>`;
     }
-    
+
     html += `</div>`;
     infoPanel.innerHTML = html;
 }
@@ -360,10 +364,10 @@ function highlightFeature(layer) {
         fillOpacity: 0.9,
         opacity: 1
     });
-    
+
 
     window.currentHighlight = layer;
-   
+
     setTimeout(() => {
         if (window.currentHighlight) {
             //vectorGrid.resetStyle(window.currentHighlight);
@@ -373,20 +377,89 @@ function highlightFeature(layer) {
     }, 3000);
 }
 
+// Catégoriser les couches
+function categorizeLayer(layerId) {
+    const forestLayers = [
+        'foret_marecageuse', 'foret_degradee', 'foret_claire', 'foret_galerie', 'foret_dense',
+        'mangrove', 'savane_arboree', 'formations_herbacees', 'formations_arbustives',
+        'zone_marecageuse', 'plan_cours_eau', 'sol_nu', 'affleurement_rocheux'
+    ];
+
+    const plantationLayers = [
+        'plantation_forestiere', 'plantation_anacarde', 'plantation_palmier_hulle',
+        'plantation_cacao', 'plantation_hevea', 'plantation_cafe', 'plantation_fruitiere',
+        'plantation_coco', 'amenaegement_agricole', 'v_ml_dk_plantations'
+    ];
+
+    if (forestLayers.includes(layerId)) {
+        return 'forests';
+    } else if (plantationLayers.includes(layerId)) {
+        return 'plantations';
+    }
+    return 'other';
+}
+
 // Initialiser l'interface utilisateur
 function initializeUI() {
     const controlsContainer = document.getElementById('layer-controls');
-    controlsContainer.innerHTML = ''; 
-    
+    controlsContainer.innerHTML = '';
+
     if (appConfig.vectorLayers.length === 0) {
         controlsContainer.innerHTML = '<div class="error">Aucune couche disponible</div>';
         return;
     }
-    
+
+    // Grouper les couches par catégorie
+    const categories = {
+        forests: { name: '🌳 Forêts & Végétation', layers: [] },
+        plantations: { name: '🌾 Plantations & Agriculture', layers: [] },
+        other: { name: '📍 Autres', layers: [] }
+    };
+
     appConfig.vectorLayers.forEach(layer => {
-        const layerItem = createLayerControl(layer);
-        controlsContainer.appendChild(layerItem);
+        const category = categorizeLayer(layer.id);
+        categories[category].layers.push(layer);
     });
+
+    // Créer les sections pour chaque catégorie
+    Object.keys(categories).forEach(categoryKey => {
+        const category = categories[categoryKey];
+        if (category.layers.length > 0) {
+            const categorySection = createCategorySection(categoryKey, category.name, category.layers);
+            controlsContainer.appendChild(categorySection);
+        }
+    });
+}
+
+// Créer une section de catégorie
+function createCategorySection(categoryId, categoryName, layers) {
+    const section = document.createElement('div');
+    section.className = 'category-section';
+    section.innerHTML = `
+        <div class="category-header" data-category="${categoryId}">
+            <span class="category-toggle">▼</span>
+            <span class="category-name">${categoryName}</span>
+            <span class="category-count">(${layers.length})</span>
+        </div>
+        <div class="category-content" id="category-${categoryId}">
+        </div>
+    `;
+
+    const content = section.querySelector('.category-content');
+    layers.forEach(layer => {
+        const layerItem = createLayerControl(layer);
+        content.appendChild(layerItem);
+    });
+
+    // Toggle de la catégorie
+    const header = section.querySelector('.category-header');
+    header.addEventListener('click', function () {
+        content.classList.toggle('collapsed');
+        const toggle = this.querySelector('.category-toggle');
+        toggle.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+    });
+
+    return section;
 }
 
 // Créer un contrôle de couche
@@ -404,22 +477,25 @@ function createLayerControl(layer) {
             <button class="action-btn info-btn" title="Informations">ⓘ</button>
         </div>
     `;
-    
+
     const checkbox = layerItem.querySelector('input');
-    checkbox.addEventListener('change', function() {
+    checkbox.addEventListener('change', function () {
         toggleVectorLayer(layer.id, this.checked, true);
+        if (window.updateSelectAllState) {
+            window.updateSelectAllState();
+        }
     });
-    
+
     const infoBtn = layerItem.querySelector('.info-btn');
-    infoBtn.addEventListener('click', function() {
+    infoBtn.addEventListener('click', function () {
         showLayerDetails(layer);
     });
-    
+
     return layerItem;
 }
 
 
-function toggleVectorLayer(layerId, visible, redraw=false) {
+function toggleVectorLayer(layerId, visible, redraw = false) {
     if (vectorGrid && vectorGrid.options.vectorTileLayerStyles) {
         const currentStyle = vectorGrid.options.vectorTileLayerStyles[layerId];
         if (currentStyle) {
@@ -428,7 +504,7 @@ function toggleVectorLayer(layerId, visible, redraw=false) {
                 fillOpacity: visible ? 0.7 : 0,
                 opacity: visible ? 0.8 : 0
             };
-            if(redraw){
+            if (redraw) {
                 vectorGrid.redraw();
             }
         }
@@ -454,19 +530,19 @@ function showLayerDetails(layer) {
                 <strong>Zoom max:</strong> ${layer.maxzoom || appConfig.maxZoom}
             </div>
     `;
-    
+
     if (layer.fields && Object.keys(layer.fields).length > 0) {
         html += `<div class="detail-item">
             <strong>Champs:</strong>
             <div class="fields-list">`;
-        
+
         Object.keys(layer.fields).forEach(field => {
             html += `<div class="field-item">• ${field}: ${layer.fields[field]}</div>`;
         });
-        
+
         html += `</div></div>`;
     }
-    
+
     html += `</div>`;
     infoPanel.innerHTML = html;
 }
@@ -476,11 +552,11 @@ function setupEventListeners() {
     // Toggle sidebar
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar');
-    
-    sidebarToggle.addEventListener('click', function() {
+
+    sidebarToggle.addEventListener('click', function () {
         sidebar.classList.toggle('collapsed');
         this.classList.toggle('active');
-        
+
         // Changer l'icône
         if (sidebar.classList.contains('collapsed')) {
             this.textContent = '☰';
@@ -489,14 +565,14 @@ function setupEventListeners() {
         }
     });
 
-    map.on('mousemove', function(e) {
-        document.getElementById('coordinates').textContent = 
+    map.on('mousemove', function (e) {
+        document.getElementById('coordinates').textContent =
             `Lat: ${e.latlng.lat.toFixed(4)}, Lng: ${e.latlng.lng.toFixed(4)}`;
     });
-    
 
-    map.on('zoomend', function() {
-        document.getElementById('zoom-level').textContent = 
+
+    map.on('zoomend', function () {
+        document.getElementById('zoom-level').textContent =
             `Zoom: ${map.getZoom()}`;
     });
 }
@@ -545,9 +621,14 @@ function formatLayerName(layerId) {
         'plantation_hevea': 'Plantation Hévéa',
         'affleurement_rocheux': 'Affleurement Rocheux',
         'plantation_cafe': 'Plantation Café',
-        'plantation_fruitiere': 'Plantation Fruitière'
+        'plantation_fruitiere': 'Plantation Fruitière',
+        'foret_claire': 'Forêt Claire',
+        'foret_galerie': 'Forêt Galerie',
+        'plantation_coco': 'Plantation de Cocotiers',
+        'foret_dense': 'Forêt Dense',
+        'v_ml_dk_plantations': 'Plantations Diverses'
     };
-    
+
     return names[layerId] || layerId.replace(/_/g, ' ');
 }
 
@@ -558,7 +639,7 @@ function formatPropertyName(property) {
         'gridcode': 'Code Grille',
         'id': 'ID'
     };
-    
+
     return names[property] || property;
 }
 
