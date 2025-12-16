@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte Interactive - Tuiles Vectorielles</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>POC | ICOOP</h1>
+            <div id="coordinates">Lat: 0, Lng: 0</div>
+        </header>
+        
+        <div class="main-content">
+            <button class="sidebar-toggle active" id="sidebar-toggle" title="Ouvrir/Fermer le menu">
+                ☰
+            </button>
+            <aside id="sidebar">
+                <div id="info-panel" class="info-panel">
+                    <h5>ℹ️ Informations</h5>
+                    <div id="feature-info" class="feature-info">
+                        Cliquez sur un élément de la carte pour voir les détails
+                    </div>
+                </div>
+                <p>&nbsp;</p>
+                <div class="control-panel">
+                    <h5>📋 Contrôle des Couches</h5>
+                    <h5>
+                    <div >
+                        <label>
+                            <input class="layer-control" type="checkbox" id="select-all-layers" checked>
+                            <span>Tout sélectionner</span>
+                        </label>
+                    </div>
+                    </h5>
+                    <div id="layer-controls">
+                        <div class="loading">Chargement des couches...</div>
+                    </div>
+                    
+                    
+                </div>
+                
+                
+            </aside>
+            
+            <main>
+                <div id="map"></div>
+                <div id="map-info" class="map-info">
+                    <span id="zoom-level">Zoom: 8</span>
+                    <span id="tile-count">Tuiles: 0</span>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
